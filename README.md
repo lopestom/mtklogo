@@ -17,7 +17,7 @@ I can't be responsible for any damage caused to your device, use this material a
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![License: APACHE](https://img.shields.io/badge/license-APACHE-blue.svg)](LICENSE)
 
-The original Readme is original [mtklogo](https://github.com/arlept/mtklogo/blob/master/README.md) source code from @arlept.
+The original file [Readme](https://github.com/arlept/mtklogo/blob/master/README.md) of mtklogo source code is from @arlept.
 
 -------------
 
