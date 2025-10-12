@@ -35,7 +35,7 @@ select action in "Unpack logo.bin" "Repack logo.bin" "Exit"; do
                 exit 1
             fi
             PS1="  What resolution do you device have?  "
-              select resolution in "720x1280" "720x1600" "720x1612" "1080x1920" "1080x2400"; do
+              select resolution in "720x1280" "720x1600" "720x1612" "720x1640" "1080x1920" "1080x2400" "1080x2460" "1280x800"; do
               echo "  The choice that you have selected is : $resolution  "
                ./mtklogo unpack -p $resolution logo.bin -o $PWD/logo
                echo "Unpacking complete."
