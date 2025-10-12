@@ -226,3 +226,63 @@ profiles:
     - { w: 16, h: 23 }
     - { w: 53, h: 2 }
 # MT6835 end - lopestorm
+
+  # For devices with 1080x2460 screens - Shirayuki39 feat lopestorm
+  # https://github.com/Shirayuki39/mtklogo/blob/master/cli/resources/bin/mtklogo.yaml
+  - name: 1080x2460
+    color_model: bgrabe
+    alias:
+    - generic_1080x2460_bgrabe
+    - lh7n
+    - x6833b
+    - x6837
+    formats:
+    # Full screen
+      - { w: 1080, h: 2460 }
+    # Percent numbers
+      - { w: 42, h: 60 }
+    # Percent symbols
+      - { w: 48, h: 60 }
+    # Charge animation
+      - { w: 228, h: 36 }
+    # Charge line
+      - { w: 228, h: 2 }
+
+  # For devices with 720x1640 screens -Shirayuki39 feat lopestorm
+  # https://github.com/Shirayuki39/mtklogo/blob/master/cli/resources/bin/mtklogo.yaml
+  - name: 720x1640
+    color_model: bgrabe
+    alias:
+    - generic_720x1640_bgrabe
+    - lg7n
+    formats:
+    # Full screen
+      - { w: 720, h: 1640 }
+    # Percent numbers
+      - { w: 28, h: 40 }
+    # Percent symbols
+      - { w: 32, h: 40 }
+    # Charge animation
+      - { w: 152, h: 24 }
+    # Charge line
+      - { w: 152, h: 2 }
+
+  # mouseos feat lopestorm
+  # https://github.com/mouseos/mtklogo/blob/master/cli/resources/bin/mtklogo.yaml
+  - name: 1280x800
+    color_model: bgrabe
+    # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - mt8167
+    - cpad3
+    formats:
+    # full screen image - 3686400 bytes
+    - { w: 1280, h: 800 }
+    # symbols - 11520 bytes
+    - { w: 45, h: 64 }
+    # bigger symbols - 14592 bytes
+    - { w: 57, h: 64 }
+    # battery charge animation - 18908 bytes
+    - { w: 163, h: 29 }
+    # battery charge level (1 line repeat) - 652 bytes
+    - { w: 163, h: 1 }
