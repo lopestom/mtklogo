@@ -53,7 +53,7 @@ As I don't want to change/tamper with the source code (I don't see myself capabl
 
     – Changed the display of the compressed bin file name in the output.
 
-Available resolutions: "720x1280" "720x1600" "720x1612" "1080x1920" "1080x2400"
+Available resolutions: "720x1280" "720x1600" "720x1612" "720x1640" "1080x1920" "1080x2400" "1080x2460" "1280x800"
 
 
 ### What does the mtklogos.sh script do?
