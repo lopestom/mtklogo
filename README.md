@@ -32,7 +32,9 @@ I tested and commented something in post [Replacing the boot logo on Android. (P
 
 The purpose of this post is to update and provide instructions for Linux users on how to change the logo (logo.bin_img) of Mediatek devices. I was reminded of this situation and was disappointed to find that the link provided in "Xiaomi Redmi 9C NFC - Modifications and Beautifications" did not work correctly with the correct Linux permissions. By combining the two projects, you can get something relatively safe to use and therefore functional.
 
+
 Therefore, I made some interesting changes and additions aimed not only at beginners but also at advanced users who need something simple.
+As I don't want to change/tamper with the source code (I don't see myself capable of doing so) either due to time or incapacity, I leave the original mtklogo file and the modified files as they are.
 
 ### What was changed/included
  1. Added the 720x1612 resolution parameter to the mtklogo.yaml file to allow specifying new devices.
@@ -74,6 +76,33 @@ If you only want to unzip and make modifications to the png files and only after
 
 ### An example of the process in operation
 
+![ezgif-5ee6b302e5841A](https://github.com/user-attachments/assets/90b6d3c8-2f54-4bea-aff4-746b1beea185)
+
+
+### What if my device resolution isn't specified in the project?
+You can edit the mtklogo.yaml file and add a name (name_) for the new resolution. After that, simply change the alias (if you have one) and formats. But keep in mind that you'll need to know if the resolution of other images, such as battery indicators and percentages, is appropriate to ensure everything is verified and confirmed.
+
+``` yaml
+- name: 1080x2340
+color_model: bgrabe
+# A profile may fit many phones, so you can give it an alias.
+Alias:
+- If you want to write a name or codiname of the device
+formats:
+- { w: 1080, h: 2340, t: "FHD+ (If you want to write a name for the device - full screen)" }
+- { w: 45, h: 64, t: "symbol" }
+- { w: 57, h: 64, t: "bigger symbol" }
+- { w: 163, h: 29, t: "battery charge animation" }
+- { w: 163, h: 1, t: "battery charge line" }
+- { w: 84, h: 121, t: "small letter" }
+- { w: 304, h: 52, t: "charge animation" }
+- { w: 108, h: 121, t: "bigger letter (percent)" }
+- { w: 304, h: 1, t: "charge line" }
+```
+After making all possible and necessary changes, edit the mtklogos.sh file and add the new device resolution parameter to line 38.
+```ruby
+select resolution in "720x1280" "720x1600" "720x1612" "1080x1920" "1080x2400" "1080x2340"; do
+```
 
 
 ## License
