@@ -1,5 +1,5 @@
 # Just a marker in case the format changes.
-version: "1.1"
+version: "1.3"
 # profiles
 profiles:
   # Default profile is for "old" MTK devices.
@@ -121,10 +121,11 @@ profiles:
   # Here is an example for my phone.
   # You can duplicate this block, give a new progile name,
   # then fill the image dimensions you expect.
-  - name: generic_mt6337t
+  - name: 720x1280
     color_model: bgrabe
     # a profile may fit many phones, so you can give it an "alias".
     alias:
+    - generic_mt6337t
     - condor_p8_lite_pgn610
     - lenovo_p1ma40
     formats:
@@ -140,8 +141,11 @@ profiles:
     - { w: 163, h: 1 }
 
   # Another example for my previous phone.
-  - name: thl5000
+  - name: 1080x1920
     color_model: rgb565le
+   # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - thl5000
     formats:
     # full screen image - 4147200 bytes
     - { w: 1080, h: 1920 }
@@ -160,3 +164,65 @@ profiles:
   #   formats:
   #   - { w: 2160, h: 3840 }
   #   - ...
+
+  # fukiame start - radme blasphemy
+  - name: 720x1600
+    color_model: bgrabe
+    # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - blossom
+    formats:
+    # full screen image - 4608000 bytes
+    - { w: 720, h: 1600 }
+    # i dont think the other stuff works but whatever i just copy paste anyways
+    # symbols - 11520 bytes
+    - { w: 45, h: 64 }
+    # bigger symbols - 14592 bytes
+    - { w: 57, h: 64 }
+    # battery charge animation - 18908 bytes
+    - { w: 163, h: 29 }
+    # battery charge level (1 line repeat) - 652 bytes
+    - { w: 163, h: 1 }
+    - { w: 72, h: 128 }
+    - { w: 16, h: 23 }
+    - { w: 53, h: 2 }
+  # fukiame end
+
+  - name: 1080x2400
+    color_model: bgrabe
+    # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - selene
+    formats:
+    - { w: 1080, h: 2400, t: "FHD+ (Redmi 10 full screen)" }
+    - { w: 45, h: 64, t: "symbol" }
+    - { w: 57, h: 64, t: "bigger symbol" }
+    - { w: 163, h: 29, t: "battery charge animation" }
+    - { w: 163, h: 1, t: "battery charge line" }
+    - { w: 84, h: 121, t: "small letter" }
+    - { w: 304, h: 52, t: "charge animation" }
+    - { w: 108, h: 121, t: "bigger letter (percent)" }
+    - { w: 304, h: 1, t: "charge line" }
+
+# MT6835 start - lopestorm
+  - name: 720x1612
+    color_model: rgbabe
+    # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - ulefone_armor_X31_Pro
+    formats:
+    # full screen image - 4608000 bytes
+    - { w: 720, h: 1612 }
+    # i dont think the other stuff works but whatever i just copy paste anyways
+    # symbols - 11520 bytes
+    - { w: 45, h: 64 }
+    # bigger symbols - 14592 bytes
+    - { w: 57, h: 64 }
+    # battery charge animation - 18908 bytes
+    - { w: 163, h: 29 }
+    # battery charge level (1 line repeat) - 652 bytes
+    - { w: 163, h: 1 }
+    - { w: 72, h: 128 }
+    - { w: 16, h: 23 }
+    - { w: 53, h: 2 }
+# MT6835 end - lopestorm
