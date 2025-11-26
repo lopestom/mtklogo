@@ -132,24 +132,34 @@ impl FileInfo {
                                  "file '{}' does not look like a .z or a supported png format", name)))
         }
     }
-    // Replace this method in src/lib.rs
+// Add near the top of the file
+use regex::Regex;
+
+// Replace the entire FileInfo::from_name method with the following:
+impl FileInfo {
+    // ... (other methods) ...
 
     pub fn from_name(name: &str) -> Result<FileInfo> {
-        // Use regex to flexibly extract the index after "logo_" prefix.
-        let re = regex::Regex::new(r"logo_(\d+).*").unwrap();
+        // Accept any filename starting with 'logo_' and containing a number after that
+        let re = Regex::new(r"logo_(\d{1,})").unwrap();
         let id = if let Some(caps) = re.captures(name) {
             caps.get(1)
                 .and_then(|m| m.as_str().parse::<usize>().ok())
-                .ok_or_else(|| IOError::new(ErrorKind::InvalidInput, "cannot parse index in filename"))?
+                .ok_or_else(|| IOError::new(ErrorKind::InvalidInput, "cannot parse numeric index after 'logo_' in filename"))?
         } else {
-            return Err(IOError::new(ErrorKind::InvalidInput, "filename does not match expected pattern 'logo_<index>...'"));
+            return Err(IOError::new(
+                ErrorKind::InvalidInput,
+                "filename does not match expected pattern: must contain 'logo_<index>'",
+            ));
         };
         if let Some(content_type) = ContentType::from_name(name) {
             Ok(FileInfo { id, content_type })
         } else {
-            Err(IOError::new(ErrorKind::InvalidInput,
-                             format!(
-                                 "file '{}' does not look like a .z or a supported png format", name)))
+            Err(IOError::new(
+                ErrorKind::InvalidInput,
+                format!("file '{}' does not look like a .z or a supported png format", name),
+            ))
         }
     }
+}
 }
