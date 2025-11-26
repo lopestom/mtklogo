@@ -87,6 +87,9 @@ The MTK logo binary image does not contain any information about the images them
 their dimensions, or their image format. The only information one surely knows is their length in bytes.
 We need a configuration file, which gives a list of possible dimensions as width (`w`) and length(`l`), for a  `color_model` (how colors are encoded, how many bytes do we need to represent a single pixel).
 
+> ⚡️**File naming for repack:**  
+> The tool now accepts any filename that starts with `logo_` followed by one or more digits (e.g., `logo_2_raw.z`, `logo_012_bgrabe.png`, `logo_123_mytype.png`). The file extension should remain `.z` or `.png`.
+
 This [configuration](cli/resources/bin/mtklogo.yaml) file is loaded from the following location (in this order):
 
 * specified by user `mtklogo unpack -c /path/to/my/configuration.yaml`
@@ -243,7 +246,7 @@ Add the following to `~/.cargo/config`:
 [target.aarch64-linux-android]
 linker = "aarch64-linux-android-gcc"
 ```
-
+z
 Then build, making sure to have the arm64 compiler toolchain in your PATH:
 
 ```bash
