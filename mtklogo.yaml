@@ -106,6 +106,7 @@ profiles:
     - { h: 1280, w: 720, t: "HD" }
     - { h: 1600, w: 900, t: "HD+" }
     - { h: 1920, w: 1080, t: "FHD" }
+    - { w: 1220, h: 2712, t: "QHD" }
     - { h: 2560, w: 1440, t: "QHD" }
     - { h: 3200, w: 1800, t: "WQXGA+" }
     - { h: 3840, w: 2160, t: "UHD" }
@@ -181,11 +182,14 @@ profiles:
     - { w: 57, h: 64 }
     # battery charge animation - 18908 bytes
     - { w: 163, h: 29 }
+    - { w: 152, h: 15 }
     # battery charge level (1 line repeat) - 652 bytes
     - { w: 163, h: 1 }
     - { w: 72, h: 128 }
     - { w: 16, h: 23 }
+    - { w: 27, h: 31 }
     - { w: 53, h: 2 }
+    - { w: 19, h: 8 }
   # fukiame end
 
   - name: 1080x2400
@@ -206,12 +210,12 @@ profiles:
 
 # MT6835 start - lopestorm
   - name: 720x1612
-    color_model: rgbabe
+    color_model: bgrabe #rgbabe
     # a profile may fit many phones, so you can give it an "alias".
     alias:
     - ulefone_armor_X31_Pro
     formats:
-    # full screen image - 4608000 bytes
+    # full screen image - 3135344 bytes
     - { w: 720, h: 1612 }
     # i dont think the other stuff works but whatever i just copy paste anyways
     # symbols - 11520 bytes
@@ -286,3 +290,64 @@ profiles:
     - { w: 163, h: 29 }
     # battery charge level (1 line repeat) - 652 bytes
     - { w: 163, h: 1 }
+
+  # test for Xiaomi Redmi Note 13 Pro Plus 5G
+  - name: 1220x2712
+    #color_model: rgbabe
+    color_model: bgrabe
+    # a profile may fit many phones, so you can give it an "alias".
+    alias:
+    - zircon
+    formats:
+    # Full screen
+    - { w: 1220, h: 2712, t: "QHD" }
+    # Percent numbers
+    - { w: 84, h: 121 }
+    # Percent symbols
+    - { w: 108, h: 121 }
+    # Charge animation
+    - { w: 304, h: 52 }
+    # Charge line
+    - { w: 304, h: 1 }
+
+  # test resolution for Acer A3-A40 Tablet - MT8163 - lopestorm
+  - name: 1200x1920
+    color_model: bgrabe
+    formats:
+    # full screen image - 3686400 bytes
+    - { w: 1200, h: 1920 }
+    # others full screen image - 3686400 bytes
+    - { w: 1920, h: 1200, t: "logo charge" }
+    # symbols - 11520 bytes
+    - { w: 45, h: 64 }
+    # bigger symbols - 14592 bytes
+    - { w: 57, h: 64 }
+    - { w: 1, h: 304, t: "charge animation" }
+    # battery charge level (1 line repeat) - 652 bytes
+    - { w: 163, h: 1 }
+    - { w: 72, h: 128 }
+    - { w: 16, h: 23 }
+    - { w: 53, h: 2 }
+# Tablet end - lopestorm
+
+  # test resolution for Acer A3-A40 Tablet - MT8163 - lopestorm
+  # These option can show the charge battery correctlly but not Real image
+  # according resolution 1200x1920 to only copy/paste
+  - name: 1920x1200
+    color_model: bgrabe
+    formats:
+    # full screen image - 3686400 bytes
+    - { w: 1920, h: 1200 }
+
+# Tablet end - lopestorm
+
+# MT6785 start - lopestorm
+
+  # For devices with 1080x2460 screens - Shirayuki39 feat lopestorm
+  # https://github.com/Shirayuki39/mtklogo/blob/master/cli/resources/bin/mtklogo.yaml
+  - name: 1080x2340
+    color_model: bgrabe
+    formats:
+    # full screen image - 3686400 bytes
+    - { w: 1080, h: 2340 }
+# MT6785 end - lopestorm
