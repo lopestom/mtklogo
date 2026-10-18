@@ -67,6 +67,18 @@ Check the images for colors, size/resolution, and keep in mind to have a copy fo
 > [!WARNING]
 > Replacing the file in the `/logo` partition with a logo_Mod.bin file may cause a bootloop or crash the device if something goes wrong/is chosen/done incorrectly, and use at your own risk. Back up the `/logo` partition and name it logo_Stock.bin to ensure the file is for your device and that you know exactly its resolution.
 
+### Illustrative images
+<details><summary> Screenshots - Click to open</summary>
+<p>
+<img width="1283" height="824" alt="1" src="https://github.com/user-attachments/assets/70c5ebdf-8124-4e5c-a0e7-bc82e1a4f0c0" />
+<img width="1283" height="816" alt="2" src="https://github.com/user-attachments/assets/f6ae8dee-be4f-49fb-9ea2-caf61e66b547" />
+<img width="1283" height="816" alt="3" src="https://github.com/user-attachments/assets/9ae7aea9-e1bc-4a88-8698-cbc865ef342f" />
+<img width="1284" height="816" alt="4" src="https://github.com/user-attachments/assets/6c158f3d-5623-4f22-b73d-fff05a0258fc" />
+<img width="1283" height="816" alt="5" src="https://github.com/user-attachments/assets/03eb7cfe-a87a-4b24-ab9a-a41cab91a2ae" />
+</p>
+</details>
+
+
 ## How the GUI detects queries (without modifying the script)
 
 * stdout and stderr are joined in a pipe and displayed live, with the ANSI colors of the script.
