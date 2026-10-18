@@ -1,6 +1,7 @@
-# mtklogo_2025-2
-This branch aims to improve the project.
-Therefore, the goal is to have an mtklogo_Linux branch for future updates with better options.
+# mtklogo_gui based on the mtklogo_2025-2 branch
+This branch aims to improve the project through a graphical user interface (GUI).
+
+The real goal is to have a visually graphical process with mtklogo_Linux, and possible future updates that may have better options are welcome.
 
 ## About [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![License: APACHE](https://img.shields.io/badge/license-APACHE-blue.svg)](LICENSE)
 
