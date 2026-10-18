@@ -412,3 +412,123 @@ profiles:
     # Charge line
     - { w: 304, h: 1 }
 # TANK 5 end - lopestorm
+
+
+# ---- Profiles merged from upstream cyberknight777/mtklogo (HEAD 55deb48) ----
+  - name: cancunf
+    color_model: bgrabe
+    formats:
+    - { w: 1080, h: 2400 }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 263, h: 47 }
+    - { w: 263, h: 2 }
+    - { w: 72, h: 128 }
+    - { w: 156, h: 88 }
+    - { w: 84, h: 204 }
+    - { w: 370, h: 370 }
+    - { w: 438, h: 88 }
+    - { w: 340, h: 88 }
+    - { w: 260, h: 88 }
+    - { w: 310, h: 88 }
+    - { w: 360, h: 88 }
+    - { w: 230, h: 88 }
+    - { w: 170, h: 88 }
+    - { w: 379, h: 88 }
+    - { w: 335, h: 88 }
+
+  - name: manaus
+    color_model: bgrabe
+    formats:
+    - { w: 1080, h: 2400 }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 263, h: 47 }
+    - { w: 263, h: 2 }
+    - { w: 72, h: 128 }
+    - { w: 156, h: 88 }
+    - { w: 84, h: 204 }
+    - { w: 370, h: 370 }
+    - { w: 438, h: 88 }
+    - { w: 340, h: 88 }
+    - { w: 260, h: 88 }
+    - { w: 310, h: 88 }
+    - { w: 360, h: 88 }
+    - { w: 230, h: 88 }
+    - { w: 170, h: 88 }
+    - { w: 379, h: 88 }
+    - { w: 335, h: 88 }
+
+  - name: xaga
+    color_model: bgrabe
+    alias:
+    - poco_x4_gt
+    formats:
+    - { w: 1080, h: 2460 }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 263, h: 47 }
+    - { w: 263, h: 2 }
+    - { w: 72, h: 128 }
+
+  - name: lamu
+    color_model: bgrabe
+    alias:
+    - lamuc
+    formats:
+    - { w: 1080, h: 2400 }
+    - { w: 720, h: 1604 }
+    - { w: 263, h: 47 }
+    - { w: 263, h: 2 }
+    - { w: 180, h: 32 }
+    - { w: 57, h: 64 }
+    - { w: 45, h: 64 }
+
+  - name: tanzanite
+    color_model: bgrabe
+    alias:
+    - redmi_note_14_4g
+    formats:
+    - { w: 1080, h: 2400 }
+    - { w: 1080, h: 2408 }
+    - { w: 72, h: 128 }
+    - { w: 158, h: 1 }
+    - { w: 34, h: 32 }
+    - { w: 23, h: 32 }
+
+  - name: lg8n
+    color_model: bgrabe
+    alias:
+    - tecno_pova_4_pro
+    formats:
+      - { w: 1080, h: 2400 }
+      - { w: 42, h: 60 }
+      - { w: 48, h: 60 }
+      - { w: 228, h: 36 }
+      - { w: 228, h: 2 }
+
+  - name: s666ln
+    color_model: bgrabe
+    alias:
+    - itel_rs4
+    formats:
+      - { w: 720, h: 1612 }
+      - { w: 28, h: 40 }
+      - { w: 32, h: 40 }
+      - { w: 152, h: 24 }
+      - { w: 152, h: 2 }
+      - { w: 720, h: 1600 }
+
+  - name: begonia
+    color_model: bgrabe
+    alias:
+    - redmi_note_8_pro
+    formats:
+      - { w: 1080, h: 2340 }
+      - { w: 1080, h: 2160 }
+      - { w: 350, h: 178 }
+      - { w: 84, h: 121 }
+      - { w: 108, h: 121 }
+      - { w: 304, h: 52 }
+      - { w: 304, h: 1 }
+      - { w: 108, h: 192 }
