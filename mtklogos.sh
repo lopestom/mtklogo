@@ -1,7 +1,7 @@
 #!/bin/bash
-# Thanks to [arlept](https://github.com/arlept/mtklogo) from github for original mtklogo binary and code source.
+# Thanks to [cyberknight777](https://github.com/cyberknight777/mtklogo) from github for new mtklogo binary and code source.
 # Thanks to [Sakurajima07](https://4pda.to/forum/index.php?showuser=11778453) from 4pda for original script.
-
+# Thanks to [arlept](https://github.com/arlept/mtklogo) from github for original mtklogo binary and code source.
 #clear
 
 abort() { echo "Error!"; }
@@ -38,7 +38,7 @@ select action in "Unpack logo.bin" "Repack logo.bin" "Unpack other logo.bin" "Re
                 exit 1
             fi
             PS1="  What resolution do you device have?  "
-              select resolution in "720x1280" "720x1600" "720x1612" "720x1640" "1080x1920" "1080x2400" "1080x2460" "1280x800" "1220x2712" "1200x1920" "1920x3446" "1080x2340"; do
+              select resolution in "720x1280" "720x1600" "720x1612" "720x1640" "1080x1920" "1080x2400" "1080x2460" "1280x800" "1220x2712" "1200x1920" "1920x3446" "1080x2340" "1440x3200"; do
               echo "  The choice that you have selected is : $resolution  "
                ./mtklogo unpack -p $resolution logo.bin -o $PWD/logo
                echo -e "\033[1;36m *************************** \033[0m "
@@ -48,10 +48,19 @@ select action in "Unpack logo.bin" "Repack logo.bin" "Unpack other logo.bin" "Re
         done
         ;;
         "Unpack other logo.bin")
-               ./mtklogo unpack logo.bin -o $PWD/logo --mode rgbabe --slots 0
-               echo -e "\033[1;36m *************************** \033[0m "
+            PS2="  Write the width of device or attempt.  "
+              echo -n "  $PS2"
+              read -r width
+              echo "  The choice that you have selected is : $width  "
+               ./mtklogo explore logo.bin --slots 0 --width $width -o $PWD/logo
+               ## ./mtklogo unpack logo.bin -o $PWD/logo --mode bgrabe --slots 0
+               echo -e "\033[1;36m *************************************************** \033[0m "
                echo -e "\033[5;34m     Unpacking complete. \033[0m "
-               echo -e "\033[1;36m *************************** \033[0m "
+               echo -e "\033[5;34m  Choose the PNG file with the best visual&color \033[0m "
+               echo -e "\033[5;34m    quality to ensure the appropriate parameter \033[0m "
+               echo -e "\033[5;34m      color model format of your device. \033[0m "
+  
+               echo -e "\033[1;36m *************************************************** \033[0m "
                ./mtklogos.sh
                ;;
         "Repack logo.bin")
