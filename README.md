@@ -1,4 +1,8 @@
-## About
+# mtklogo_2025-2
+This branch aims to improve the project.
+Therefore, the goal is to have an mtklogo_Linux branch for future updates with better options.
+
+## About [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![License: APACHE](https://img.shields.io/badge/license-APACHE-blue.svg)](LICENSE)
 
 mtklogo is a Command Line Interface with a thin reusable library which lets you hack
 an MTK "LOGO" image. The main (and probably only) use case is replacing
@@ -8,14 +12,14 @@ This program is able to unpack, and subsequently repack all logo images (includi
 the big logo, the phone charging animation, etc. provided you can tell - or guess - the dimension
 of these images).
 
-**WARNING**: replacing the vendor's logo image may break your device.
+> [!CAUTION]
+> replacing the vendor's logo image may break your device.
+> 
+> Do backups before proceeding.
 
-Do backups before proceeding.
+**I can't be responsible for any damage caused to your device, use this material at your own risk.**
 
-I can't be responsible for any damage caused to your device, use this material at your own risk.
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![License: APACHE](https://img.shields.io/badge/license-APACHE-blue.svg)](LICENSE)
 
 The original file [Readme](https://github.com/arlept/mtklogo/blob/master/README.md) of mtklogo source code is from @arlept.
 
