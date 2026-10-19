@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Inicia a mtklogo GUI. Cria um venv local (.venv) com PySide6 se o Qt não estiver instalado.
-#   ./run.sh                    -> abre a GUI
-#   ./run.sh --install-desktop  -> cria atalho no menu de aplicativos
+# Starts the mtklogo GUI. Creates a local venv (.venv) with PySide6 if Qt is not installed.
+#   ./run.sh                    -> Opens the GUI
+#   ./run.sh --install-desktop  -> Creates a shortcut in the applications menu
 set -e
 cd "$(dirname "$(readlink -f "$0")")"
 HERE="$PWD"
@@ -14,13 +14,13 @@ if [ "$1" = "--install-desktop" ]; then
 [Desktop Entry]
 Type=Application
 Name=mtklogo GUI
-Comment=Interface gráfica para o mtklogos.sh
+Comment=Graphical interface for mtklogos.sh
 Exec=bash "$HERE/run.sh"
 Path=$HERE
 Terminal=false
 Categories=Utility;Development;
 EOF
-    echo "Atalho criado em ~/.local/share/applications/mtklogo-gui.desktop"
+    echo "Shortcut created in ~/.local/share/applications/mtklogo-gui.desktop"
     exit 0
 fi
 
@@ -31,17 +31,17 @@ sys.exit(0 if (importlib.util.find_spec("PySide6") or importlib.util.find_spec("
 PY
 }
 
-command -v python3 >/dev/null || { echo "python3 não encontrado."; exit 1; }
+command -v python3 >/dev/null || { echo "python3 not found."; exit 1; }
 
 if have_qt python3; then
     PY=python3
 else
     if [ ! -x .venv/bin/python ]; then
-        echo ">> Criando ambiente virtual (.venv)…"
-        python3 -m venv .venv || { echo "Instale o pacote python3-venv e tente de novo."; exit 1; }
+        echo ">> Creating a virtual environment (.venv)…"
+        python3 -m venv .venv || { echo "Install the python3-venv package and try again."; exit 1; }
     fi
     if ! have_qt .venv/bin/python; then
-        echo ">> Instalando PySide6 (só na primeira vez)…"
+        echo ">> Installing PySide6 (first time only)..."
         .venv/bin/pip install --quiet -r requirements.txt
     fi
     PY=.venv/bin/python
