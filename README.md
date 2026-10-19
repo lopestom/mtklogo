@@ -10,7 +10,7 @@ mtklogo is a Command Line Interface with a thin reusable library which lets you 
 This application is able to unpack, and subsequently repack all logo images (including the logo/initials big pictures, the phone charging animation, etc. provided you can tell - or guess the resolution - size/dimension of these images).
 
 > [!CAUTION]
-> replacing the vendor's logo image may break your device.
+> replacing the OEM's logo image may break your device.
 > 
 > Do backups before proceeding.
 
@@ -65,7 +65,7 @@ The extracted files are located in `logo/` folder within the working directory; 
 Check the images for colors, size/resolution, and keep in mind to have a copy for further modifications if you wish.
 
 > [!WARNING]
-> Replacing the file in the `/logo` partition with a logo_Mod.bin file may cause a bootloop or crash the device if something goes wrong/is chosen/done incorrectly, and use at your own risk. Back up the `/logo` partition and name it logo_Stock.bin to ensure the file is for your device and that you know exactly its resolution.
+> Replacing the file in the `/logo` partition with a logo_Mod.bin file may cause a bootloop or crash the device if something goes wrong/is chosen/done incorrectly, so use at your own risk. Backup the `/logo` partition and name it logo_Stock.bin to ensure the file is from & for your device and that you know exactly its resolution.
 
 ### Illustrative images
 <details><summary> Screenshots - Click to open</summary>
@@ -78,6 +78,26 @@ Check the images for colors, size/resolution, and keep in mind to have a copy fo
 </p>
 </details>
 
+## The `Unpack other logo.bin` option
+If you don't know your device's resolution, then choose this option.
+When choosing `Unpack other logo.bin`, you will be prompted to enter a width value. You can enter only the numbers and thus test how the images will be unpacked, checking and confirming which one will be the best.
+If you get the resolution right with the pre-selected width, then you have two options:
+- After editing the chosen images, select `Repack other logo.bin`;
+- If the resolution is in the resolutions box, delete the `logo/` folder and try the `Unpack logo.bin` option.
+
+> [!TIP]
+> Choose the PNG file with the best visual&color quality to ensure the appropriate parameter color model format of your device.
+
+### Illustrative images
+<details><summary> Screenshots 2 - Click to open</summary>
+<p>
+<img width="1382" height="885" alt="11" src="https://github.com/user-attachments/assets/6f943d3f-d274-43fb-b201-2883a650d8b3" />
+<img width="1382" height="885" alt="22" src="https://github.com/user-attachments/assets/4e353724-9f59-4503-8de7-7548e67d30ff" />
+<img width="1382" height="885" alt="33" src="https://github.com/user-attachments/assets/98bf1fcf-9d05-4a19-9a7b-aaae5dbd8213" />
+<img width="1382" height="885" alt="44" src="https://github.com/user-attachments/assets/d49e1981-1b84-4669-85fe-bb8c091d26b5" />
+<img width="1177" height="471" alt="55" src="https://github.com/user-attachments/assets/6484a1b3-4fe4-47ae-9619-4a260bfb9184" />
+</p>
+</details>
 
 ## How the GUI detects queries (without modifying the script)
 
