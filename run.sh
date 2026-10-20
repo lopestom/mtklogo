@@ -41,7 +41,7 @@ else
         python3 -m venv .venv || { echo "Install the python3-venv package and try again."; exit 1; }
     fi
     if ! have_qt .venv/bin/python; then
-        echo ">> Installing PySide6 (first time only)..."
+        echo ">> Installing PySide6 (first time only)…"
         .venv/bin/pip install --quiet -r requirements.txt
     fi
     PY=.venv/bin/python
