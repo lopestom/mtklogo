@@ -1,0 +1,351 @@
+diff --git a/cli/src/command/repack.rs b/cli/src/command/repack.rs
+index 6985e15..88f8944 100644
+--- a/cli/src/command/repack.rs
++++ b/cli/src/command/repack.rs
+@@ -1,12 +1,18 @@
+ use super::meta;
+-use super::{cmd, data1, data2, emphasize1, emphasize2};
++use super::{cmd, data1, data2, emphasize1, emphasize2, warn};
+ use mtklogo::utils::{image, image::ImageIO, load_raw, z_lib};
+ use mtklogo::{ContentType, FileInfo, LogoImage, MtkHeader};
+ use std::fs::File;
+ use std::io::{BufReader, BufWriter, Cursor, Error as IOError, ErrorKind, Result};
+ use std::path::PathBuf;
+ 
+-pub fn run_repack(outpath: PathBuf, files: Vec<PathBuf>, strip_alpha: bool) -> Result<()> {
++pub fn run_repack(
++    outpath: PathBuf,
++    files: Vec<PathBuf>,
++    strip_alpha: bool,
++    reference: Option<PathBuf>,
++    force: bool,
++) -> Result<()> {
+     println!(
+         "{} {} files into {} stripping alpha: {}.",
+         cmd("repack"),
+@@ -29,6 +35,9 @@ pub fn run_repack(outpath: PathBuf, files: Vec<PathBuf>, strip_alpha: bool) -> R
+         blobs.push(import_logo(file, strip_alpha)?);
+     }
+     let count = blobs.len();
++    if let Some(reference) = reference.as_ref() {
++        check_against_reference(reference, &blobs, force)?;
++    }
+     let mut image = LogoImage::new_blobs(blobs)?;
+     // Restore the device header and re-append the cert from the sidecar.
+     if let Some(dir) = input_dir
+@@ -42,14 +51,81 @@ pub fn run_repack(outpath: PathBuf, files: Vec<PathBuf>, strip_alpha: bool) -> R
+     }
+     let mut writer = BufWriter::new(File::create(&outpath)?);
+     image.write(&mut writer)?;
++    drop(writer);
+     println!(
+         "successfully repacked {} logos to {}",
+         data1(count),
+         emphasize1(outpath.display())
+     );
++    if let Some(reference) = reference.as_ref()
++        && let (Ok(new), Ok(old)) = (std::fs::metadata(&outpath), std::fs::metadata(reference))
++    {
++        let (new, old) = (new.len(), old.len());
++        let delta = new as i64 - old as i64;
++        println!(
++            "size: {} bytes (original {} bytes, {:+} bytes)",
++            data1(new),
++            data2(old),
++            delta
++        );
++        // The real limit is the size of the logo partition, which we can't know;
++        // a noticeable growth is worth a warning though.
++        if new > old + old / 20 {
++            println!(
++                "{}: the new image is more than 5% bigger than the original; check that it fits in your logo partition.",
++                warn("warning")
++            );
++        }
++    }
+     Ok(())
+ }
+ 
++/// Compares the new blobs with the ones of the original `logo.bin`.
++/// A slot whose decompressed size changed means the picture has other
++/// dimensions than the device expects.
++fn check_against_reference(reference: &PathBuf, blobs: &[Vec<u8>], force: bool) -> Result<()> {
++    let mut reader = BufReader::new(File::open(reference)?);
++    let original = LogoImage::read(&mut reader)?;
++    let mut problems = 0usize;
++    if original.blobs.len() != blobs.len() {
++        println!(
++            "{}: the original has {} slots but {} files were given",
++            warn("mismatch"),
++            original.blobs.len(),
++            blobs.len()
++        );
++        problems += 1;
++    }
++    for (id, (old, new)) in original.blobs.iter().zip(blobs.iter()).enumerate() {
++        let old_len = z_lib::inflate(old).map(|v| v.len());
++        let new_len = z_lib::inflate(new).map(|v| v.len());
++        if let (Ok(o), Ok(n)) = (old_len, new_len)
++            && o != n
++        {
++            println!(
++                "{}: slot {} decompressed size is {} bytes, original is {} bytes (wrong image dimensions?)",
++                warn("mismatch"),
++                data1(id),
++                n,
++                o
++            );
++            problems += 1;
++        }
++    }
++    if problems == 0 {
++        println!("reference check: all {} slots match the original sizes", data1(blobs.len()));
++        Ok(())
++    } else if force {
++        println!("{}: {} mismatch(es) ignored because of --force", warn("warning"), problems);
++        Ok(())
++    } else {
++        Err(IOError::new(
++            ErrorKind::InvalidData,
++            format!("{} slot(s) differ from the original; use --force to repack anyway", problems),
++        ))
++    }
++}
++
+ struct PackableFile {
+     path: PathBuf,
+     info: FileInfo,
+diff --git a/cli/src/config/mod.rs b/cli/src/config/mod.rs
+index b5c857a..d60b555 100755
+--- a/cli/src/config/mod.rs
++++ b/cli/src/config/mod.rs
+@@ -126,6 +126,39 @@ impl Config {
+     }
+ 
+     pub fn load() -> Result<Config> {
+-        Config::config_path().and_then(|(path, file)| Self::wrap_read(path.as_path(), file))
++        Self::load_with_path().map(|(config, _)| config)
++    }
++
++    /// Loads the configuration and also tells which file was actually used.
++    ///
++    /// `$HOME/.config/mtklogo.yaml` silently wins over the file shipped next
++    /// to the executable, which is a classic trap: you edit the local yaml and
++    /// nothing changes. Callers can show the path (and the shadowed files).
++    pub fn load_with_path() -> Result<(Config, PathBuf)> {
++        let (path, file) = Config::config_path()?;
++        let config = Self::wrap_read(path.as_path(), file)?;
++        Ok((config, path))
++    }
++
++    /// Other candidate configuration files that exist but are NOT used.
++    pub fn shadowed_by(used: &Path) -> Vec<PathBuf> {
++        let mut candidates: Vec<PathBuf> = Vec::new();
++        if let Some(mut home) = env::home_dir() {
++            home.push(".config");
++            home.push(Self::RELATIVE_CONFIG);
++            candidates.push(home);
++        }
++        candidates.push(PathBuf::from(Self::GLOBAL_CONFIG));
++        if let Ok(exe) = env::current_exe()
++            && let Some(parent) = exe.parent()
++        {
++            candidates.push(parent.join(Self::RELATIVE_CONFIG));
++        }
++        let used = std::fs::canonicalize(used).unwrap_or_else(|_| used.to_path_buf());
++        candidates
++            .into_iter()
++            .filter(|c| c.is_file())
++            .filter(|c| std::fs::canonicalize(c).map(|c| c != used).unwrap_or(true))
++            .collect()
+     }
+ }
+diff --git a/cli/src/main.rs b/cli/src/main.rs
+index dd9e6c0..2aa6464 100755
+--- a/cli/src/main.rs
++++ b/cli/src/main.rs
+@@ -139,6 +139,29 @@ Note: the program may be very slow if your input size is a large prime number!")
+                 .action(ArgAction::SetTrue)
+                 .short('a')
+                 .long("alpha"))
++            .arg(Arg::new("reference")
++                .help("Original `logo.bin`: checks slot count and every slot's decompressed size against it (wrong image dimensions usually brick the boot logo) and warns if the result is bigger")
++                .value_name("original")
++                .num_args(1)
++                .short('r')
++                .long("reference")
++                .value_parser(clap::builder::ValueParser::new(is_existing_file)))
++            .arg(Arg::new("force")
++                .help("With --reference: only warn about mismatches instead of failing")
++                .action(ArgAction::SetTrue)
++                .long("force")
++                .requires("reference"))
++        )
++
++        .subcommand(Command::new("profiles")
++            .about("Lists the profiles of the configuration file (machine friendly: name, color model, number of formats, aliases; tab separated)")
++            .arg(Arg::new("config")
++                .help("Uses an alternative configuration file")
++                .value_name("configfile")
++                .num_args(1)
++                .short('c')
++                .long("config")
++                .value_parser(clap::builder::ValueParser::new(is_existing_file)))
+         )
+ }
+ 
+@@ -146,10 +169,36 @@ fn wrapped_main() -> IOResult<()> {
+     let mut prg = build_cli();
+     let matches = prg.clone().get_matches();
+ 
++    // `profiles` output is meant to be parsed by scripts: no banner.
++    if let Some(matches) = matches.subcommand_matches("profiles") {
++        let config = solve_config(matches)?.0;
++        for p in config.profiles.iter() {
++            println!(
++                "{}\t{}\t{}\t{}",
++                p.name,
++                p.color_model,
++                p.formats.len(),
++                p.alias.as_ref().map(|a| a.join(",")).unwrap_or_default()
++            );
++        }
++        return Ok(());
++    }
++
+     println!("{}", emphasize1(String::from_utf8_lossy(LOGO)));
+ 
+     if let Some(matches) = matches.subcommand_matches("unpack") {
+-        let config = solve_config(matches)?;
++        let (config, config_path) = solve_config(matches)?;
++        if let Some(path) = config_path {
++            println!("configuration: {}", emphasize1(path.display()));
++            for other in Config::shadowed_by(&path) {
++                println!(
++                    "{}: {} exists but is ignored ({} has priority)",
++                    warn("warning"),
++                    other.display(),
++                    path.display()
++                );
++            }
++        }
+         let profile = matches
+             .get_one::<String>("profile")
+             .map(|s| s.as_str())
+@@ -191,7 +240,9 @@ fn wrapped_main() -> IOResult<()> {
+             .map(PathBuf::from)
+             .unwrap_or_default();
+         let strip_alpha = matches.get_flag("alpha");
+-        command::run_repack(output, paths, strip_alpha)
++        let reference = matches.get_one::<String>("reference").map(PathBuf::from);
++        let force = matches.get_flag("force");
++        command::run_repack(output, paths, strip_alpha, reference, force)
+     } else if let Some(matches) = matches.subcommand_matches("guess") {
+         let size = parse_or_error::<usize>(matches, "size")?;
+         command::run_guess(size)
+@@ -232,10 +283,13 @@ fn solve_output(matches: &ArgMatches) -> IOResult<PathBuf> {
+         .or_else(|_| env::current_dir())
+ }
+ 
+-fn solve_config(matches: &ArgMatches) -> IOResult<Config> {
++fn solve_config(matches: &ArgMatches) -> IOResult<(Config, Option<PathBuf>)> {
+     match matches.get_one::<String>("config") {
+-        Some(c) => Config::from_file(PathBuf::from(c).as_path()),
+-        None => Config::load(),
++        Some(c) => {
++            let path = PathBuf::from(c);
++            Config::from_file(path.as_path()).map(|cfg| (cfg, Some(path)))
++        }
++        None => Config::load_with_path().map(|(cfg, path)| (cfg, Some(path))),
+     }
+ }
+ 
+diff --git a/src/utils/image.rs b/src/utils/image.rs
+index 964fbb4..ca3ee43 100755
+--- a/src/utils/image.rs
++++ b/src/utils/image.rs
+@@ -40,7 +40,8 @@ impl ImageIO for ColorMode {
+     fn device_to_rgba(&self, device: &[u8], w: u32, h: u32) -> Result<Vec<u8>> {
+         match self {
+             ColorMode::Rgba(Endian::Big) => Ok(device.to_vec()),
+-            ColorMode::Rgba(Endian::Little) => u32be_to_u32le(device, device.len()),
++            // `words` counts 32-bit pixels, not bytes (was `device.len()`, which over-read the buffer).
++            ColorMode::Rgba(Endian::Little) => u32be_to_u32le(device, device.len() / 4),
+             ColorMode::Bgra(Endian::Big) => rgba_to_bgra::<BigEndian, _>(device, w, h),
+             ColorMode::Bgra(Endian::Little) => rgba_to_bgra::<LittleEndian, _>(device, w, h),
+             ColorMode::Rgb565(Endian::Big) => rgb565_to_rgba::<BigEndian>(device, w, h),
+@@ -50,8 +51,14 @@ impl ImageIO for ColorMode {
+ }
+ 
+ /// Reads a PNG source as bytes buffer the Rgba color mode.
++///
++/// Whatever the editor exported (RGB without alpha, grayscale, palette,
++/// 16 bits per channel...) is normalised to 8-bit RGBA. Previously only RGBA
++/// PNGs worked and anything else failed with a misleading
++/// "failed to fill whole buffer" error.
+ pub fn png_to_rgba<R: Read + BufRead + Seek>(reader: R) -> Result<(Vec<u8>, u32, u32)> {
+-    let decoder = png::Decoder::new(reader);
++    let mut decoder = png::Decoder::new(reader);
++    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+     let mut png_reader = decoder.read_info()?;
+     let buffer_size = png_reader
+         .output_buffer_size()
+@@ -60,7 +67,26 @@ pub fn png_to_rgba<R: Read + BufRead + Seek>(reader: R) -> Result<(Vec<u8>, u32,
+     let mut buf = vec![0; buffer_size];
+     // png is supposed to contain a single frame.
+     let info = png_reader.next_frame(&mut buf)?;
+-    Ok((buf, info.width, info.height))
++    let data = &buf[..info.buffer_size()];
++    let rgba = match info.color_type {
++        png::ColorType::Rgba => data.to_vec(),
++        png::ColorType::Rgb => data
++            .chunks_exact(3)
++            .flat_map(|p| [p[0], p[1], p[2], 0xFF])
++            .collect(),
++        png::ColorType::Grayscale => data.iter().flat_map(|&g| [g, g, g, 0xFF]).collect(),
++        png::ColorType::GrayscaleAlpha => data
++            .chunks_exact(2)
++            .flat_map(|p| [p[0], p[0], p[0], p[1]])
++            .collect(),
++        png::ColorType::Indexed => {
++            return Err(IOError::new(
++                ErrorKind::InvalidData,
++                "indexed png could not be expanded",
++            ));
++        }
++    };
++    Ok((rgba, info.width, info.height))
+ }
+ 
+ /// Clears the alpha channel (set to 0xFF).
+@@ -221,3 +247,30 @@ fn test_u32_endianness_conversion_preserves_rgba_channels() {
+     let roundtrip = u32be_to_u32le(&rgba_le[..], 1).unwrap();
+     assert_eq!(rgba_be.to_vec(), roundtrip);
+ }
++
++#[test]
++fn test_rgbale_device_to_rgba_roundtrip() {
++    // two pixels, in the "pivot" RGBA big endian format
++    let rgba = [0x11_u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88];
++    let mode = ColorMode::Rgba(Endian::Little);
++    let device = mode.rgba_to_device(&rgba, 2, 1).unwrap();
++    // used to fail with "failed to fill whole buffer"
++    let back = mode.device_to_rgba(&device, 2, 1).unwrap();
++    assert_eq!(rgba.to_vec(), back);
++}
++
++#[test]
++fn test_png_rgb_without_alpha_is_expanded() {
++    // 1x2 RGB png (no alpha channel) -> opaque RGBA
++    let mut png_bytes = Vec::new();
++    {
++        let mut enc = png::Encoder::new(&mut png_bytes, 1, 2);
++        enc.set_color(png::ColorType::Rgb);
++        enc.set_depth(png::BitDepth::Eight);
++        let mut w = enc.write_header().unwrap();
++        w.write_image_data(&[1, 2, 3, 4, 5, 6]).unwrap();
++    }
++    let (rgba, w, h) = png_to_rgba(Cursor::new(png_bytes)).unwrap();
++    assert_eq!((w, h), (1, 2));
++    assert_eq!(rgba, vec![1, 2, 3, 0xFF, 4, 5, 6, 0xFF]);
++}

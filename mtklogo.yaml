@@ -1,5 +1,20 @@
 # Just a marker in case the format changes.
 version: "1.4"
+
+# ---------------------------------------------------------------------------
+# HOW mtklogo CHOOSES THIS FILE (priority order):
+#   1) $HOME/.config/mtklogo.yaml <- WINS over all others, silently (trap!)
+#   2) /etc/mtklogo.yaml
+#   3) mtklogo.yaml next to the executable
+# If editing this file doesn't change anything, check if the one in ~/.config exists.
+# (the patched mtklogo shows "configuration: <path>" and warns about the ignored ones)
+#
+# HOW IMAGES ARE RECOGNIZED:
+# The uncompressed slot size / bytes-per-pixel = number of pixels. The 1st
+# format of the list with the same w*h is used. Two formats with the same w*h
+# (e.g., 1x304 and 304x1) are ambiguous: the one that comes FIRST is valid. Slots without a 
+# corresponding format are NOT lost: they are removed as logo_NNN_raw.z and returned intact in the repack.
+# ---------------------------------------------------------------------------
 # profiles
 profiles:
   # Default profile is for "old" MTK devices.
@@ -191,6 +206,9 @@ profiles:
     - { w: 27, h: 31 }
     - { w: 53, h: 2 }
     - { w: 19, h: 8 }
+    # verified in the example logo.bin file (10 frames of the loading animation and the loading line)
+    - { w: 180, h: 32, t: "charge animation frame" }
+    - { w: 360, h: 1, t: "charge line" }
   # fukiame end
 
   - name: 1080x2400
@@ -532,3 +550,153 @@ profiles:
       - { w: 304, h: 52 }
       - { w: 304, h: 1 }
       - { w: 108, h: 192 }
+
+# =======================================================================================
+# EXPERIMENTAL PROFILES - NOT VERIFIED ON DEVICES
+# Only the fullscreen image (exact width of the screen) is correct; the other items are
+# the sizes common to several bgrabe profiles. Anything that doesn't match comes out as .z
+# (without loss) and returns intact in the repack. If the fullscreen PNG comes out "striped",
+# the color_model is wrong: use -m rgbabe|rgbale|bgrabe|bgrale|rgb565be|rgb565le.
+#
+# Have you confirmed your device? Submit a PR (Pull Request) to update the profile in the upstream.
+# =======================================================================================
+  - name: exp_720x1440
+    color_model: bgrabe
+    formats:
+    # HD+ 18:9
+    - { w: 720, h: 1440, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_720x1520
+    color_model: bgrabe
+    formats:
+    # HD+ 19:9 (ex.: screen 6.5")
+    - { w: 720, h: 1520, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_720x1560
+    color_model: bgrabe
+    formats:
+    # HD+ 19.5:9
+    - { w: 720, h: 1560, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1080x2280
+    color_model: bgrabe
+    formats:
+    # FHD+ 19:9
+    - { w: 1080, h: 2280, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1080x2408
+    color_model: bgrabe
+    formats:
+    # FHD+ (e.g. some lines Redmi/POCO)
+    - { w: 1080, h: 2408, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1080x2412
+    color_model: bgrabe
+    formats:
+    # FHD+
+    - { w: 1080, h: 2412, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1080x2640
+    color_model: bgrabe
+    formats:
+    # FHD+ Extended
+    - { w: 1080, h: 2640, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1200x2000
+    color_model: bgrabe
+    formats:
+    # tablet 10" 5:3
+    - { w: 1200, h: 2000, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1200x2400
+    color_model: bgrabe
+    formats:
+    # tablet 2K
+    - { w: 1200, h: 2400, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1600x2560
+    color_model: bgrabe
+    formats:
+    # tablet WQXGA
+    - { w: 1600, h: 2560, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_1440x2560
+    color_model: bgrabe
+    formats:
+    # QHD 16:9
+    - { w: 1440, h: 2560, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_540x960
+    color_model: bgrabe
+    formats:
+    # qHD
+    - { w: 540, h: 960, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_480x854
+    color_model: bgrabe
+    formats:
+    # FWVGA
+    - { w: 480, h: 854, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
+  - name: exp_600x1024
+    color_model: bgrabe
+    formats:
+    # tablet 7" WSVGA
+    - { w: 600, h: 1024, t: "Full screen" }
+    - { w: 45, h: 64 }
+    - { w: 57, h: 64 }
+    - { w: 72, h: 128 }
+    - { w: 180, h: 32 }
+    - { w: 360, h: 1 }
