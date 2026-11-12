@@ -1,6 +1,6 @@
 #+TITLE: mtklogo
 
-The updated readme report for this repository v1.1.0 is at [[https://github.com/lopestom/mtklogo_gui/tree/mtklogo_v1.5][README]].
+Review and analyze the updated documentation for this branch v1.1.0 at [[https://github.com/lopestom/mtklogo_gui/tree/mtklogo_v1.5][README]].
 
 [[https://img.shields.io/badge/license-MIT-blue.svg]]
 [[https://img.shields.io/badge/license-APACHE-blue.svg]]
