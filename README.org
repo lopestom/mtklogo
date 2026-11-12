@@ -36,7 +36,7 @@ Modifying the stock logo image may break your device! Do backups before proceedi
 
 * Usage
 
-First download the mtklogo binary relevant to the OS and/or platform you are on (Supported platforms are Linux x64, Windows and Android ARM64) and the mtklogo.yaml from [[https://github.com/cyberknight777/mtklogo/releases/][here]].
+First download the mtklogo binary relevant to the OS and/or platform you are on (Supported platforms are Linux x64, Windows and Android ARM64) and the mtklogo.yaml from [[https://github.com/lopestom/mtklogo/releases/][here]].
 
 Place both of the files in a directory and open a terminal in it.
 
@@ -252,7 +252,7 @@ Install the rust toolchain and cargo via [[https://rustup.rs][rustup]].
 Next, clone the repo via:
 
 #+BEGIN_SRC shell
-$ git clone https://github.com/cyberknight777/mtklogo
+$ git clone https://github.com/lopestom/mtklogo
 #+END_SRC
 
 Build it by running these commands:
