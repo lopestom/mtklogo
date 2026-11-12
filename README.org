@@ -1,8 +1,10 @@
 #+TITLE: mtklogo
 
+The updated readme report for this repository v1.1.0 is at [[https://github.com/lopestom/mtklogo_gui/tree/mtklogo_v1.5][README]].
+
 [[https://img.shields.io/badge/license-MIT-blue.svg]]
 [[https://img.shields.io/badge/license-APACHE-blue.svg]]
-[[https://github.com/cyberknight777/mtklogo/actions/workflows/ci.yml/badge.svg]]
+[[https://github.com/lopestom/mtklogo/actions/workflows/ci.yml/badge.svg]]
 
 * Table of contents
 :PROPERTIES:
