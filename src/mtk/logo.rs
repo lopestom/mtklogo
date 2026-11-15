@@ -195,6 +195,21 @@ impl LogoImage {
             reader.read_to_end(&mut cert)?;
         }
         let cert_inner_len = table.header.size.saturating_sub(table.block_size);
+        // The outer cert sits at `align_up(512 + dsize, align_size)`, and `write`
+        // re-creates that padding. Keeping it inside `cert` as well made every
+        // repack insert the padding twice, shifting cert1/cert2 off their alignment.
+        let align = table.header.align_size as usize;
+        if align > 0 {
+            let inner = cert_inner_len as usize;
+            let data_end = MtkHeader::SIZE + table.header.size as usize;
+            let pad = (align - data_end % align) % align;
+            if pad > 0
+                && cert.len() > inner + pad
+                && cert[inner..inner + pad].iter().all(|b| *b == 0)
+            {
+                cert.drain(inner..inner + pad);
+            }
+        }
         Ok(LogoImage {
             table,
             blobs,
@@ -294,5 +309,39 @@ impl LogoImage {
             writer.write_all(outer)?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    /// Builds an extended-header image whose `512 + dsize` is not 16-aligned,
+    /// followed by an aligned outer "cert" (an MTK header magic + payload).
+    fn sample() -> Vec<u8> {
+        let blobs = vec![vec![1u8; 17], vec![2u8; 30]];
+        let mut image = LogoImage::new_blobs(blobs).unwrap();
+        image.table.header.align_size = 16;
+        let mut bytes = Vec::new();
+        image.write(&mut bytes).unwrap();
+        let data_end = bytes.len();
+        let pad = (16 - data_end % 16) % 16;
+        assert_ne!(pad, 0, "sample must need padding");
+        bytes.resize(data_end + pad, 0);
+        bytes.extend_from_slice(&[0x88, 0x16, 0x88, 0x58, 9, 9, 9, 9]); // cert stand-in
+        bytes
+    }
+
+    #[test]
+    fn repack_keeps_the_outer_cert_aligned() {
+        let original = sample();
+        let image = LogoImage::read(&mut Cursor::new(&original)).unwrap();
+        let mut again = Vec::new();
+        image.write(&mut again).unwrap();
+        assert_eq!(
+            again, original,
+            "unchanged image must round-trip byte for byte"
+        );
     }
 }

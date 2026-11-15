@@ -3,12 +3,12 @@
 [package]
 name = "mtklogo"
 version.workspace = true
-authors = ["arlept <arnaud@lepoint.net>", "Cyber Knight <cyberknight755@gmail.com>"]
+authors = ["arlept <arnaud@lepoint.net>", "Cyber Knight <cyberknight755@gmail.com>", "lopestom <guillopes2002@gmail.com>"]
 edition = "2024"
 # see https://spdx.org/licenses/
 license = "MIT OR Apache-2.0"
 description = "A Rust library for parsing MTK logo images."
-repository = "https://github.com/cyberknight777/mtklogo"
+repository = "https://github.com/lopestom/mtklogo"
 keywords = ["Android", "MTK", "Logo"]
 categories = ["development-tools"]
 readme = "README.md"
@@ -47,7 +47,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.1"
+version = "1.1.0"
 
 [profile.release]
 codegen-units = 1

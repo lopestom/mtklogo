@@ -243,6 +243,36 @@ storing slot 10 (604 bytes) to /tmp/logos/logo_010_bgrabe.png as 45x64 bgrabe im
 
 There are additional parameters available. Run =mtklogo unpack -h= for a complete list and usage information of the unpack command.
 
+** Multi-image containers
+Some devices (Android 16 images, e.g. Unihertz Tank 5) ship a =logo.bin= that chains several
+logo images, each followed by its own certificates:
+
+#+begin_example
+[logo1][cert1][cert2] [logo2][cert1][cert2]
+#+end_example
+
+Without options =unpack= reads the first image only, as before, and prints a warning when other
+logo images exist (they stay untouched as opaque data, and are preserved by =repack=).
+
+- =unpack --image <n|label|all>= :: =1= is =logo1=, =2= is =logo2=, a label such as =logo2= also
+  works, =all= extracts every image into one sub-folder each (=out/logo1=, =out/logo2=...).
+  A file with a single image is extracted flat, whatever the value. Each folder gets its own
+  =.mtklogo-meta=, so =repack= restores that image's header and certificates.
+- =split [-o dir] logo.bin= :: writes one file per image (=logo1.bin=, =logo2.bin=...). Each of
+  them is a valid logo file for every other command.
+- =join -o logo.bin part1.bin part2.bin...= :: concatenates the parts, starting each one on its
+  declared alignment boundary.
+
+#+begin_src sh
+mtklogo unpack -p 1440x3200 --image all -o out logo.bin
+# edit the PNGs, then rebuild each image and join them back
+mtklogo repack -o logo1.bin out/logo1/*.png
+mtklogo repack -o logo2.bin out/logo2/*.png
+mtklogo join   -o logo_new.bin logo1.bin logo2.bin
+#+end_src
+
+Repacking unchanged PNGs and joining reproduces the original file byte for byte.
+
 * Build Instructions
 
 ** Compiling for Windows and Linux

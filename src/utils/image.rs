@@ -40,7 +40,8 @@ impl ImageIO for ColorMode {
     fn device_to_rgba(&self, device: &[u8], w: u32, h: u32) -> Result<Vec<u8>> {
         match self {
             ColorMode::Rgba(Endian::Big) => Ok(device.to_vec()),
-            ColorMode::Rgba(Endian::Little) => u32be_to_u32le(device, device.len()),
+            // `words` counts 32-bit pixels, not bytes (was `device.len()`, which over-read the buffer).
+            ColorMode::Rgba(Endian::Little) => u32be_to_u32le(device, device.len() / 4),
             ColorMode::Bgra(Endian::Big) => rgba_to_bgra::<BigEndian, _>(device, w, h),
             ColorMode::Bgra(Endian::Little) => rgba_to_bgra::<LittleEndian, _>(device, w, h),
             ColorMode::Rgb565(Endian::Big) => rgb565_to_rgba::<BigEndian>(device, w, h),
@@ -50,8 +51,14 @@ impl ImageIO for ColorMode {
 }
 
 /// Reads a PNG source as bytes buffer the Rgba color mode.
+///
+/// Whatever the editor exported (RGB without alpha, grayscale, palette,
+/// 16 bits per channel...) is normalised to 8-bit RGBA. Previously only RGBA
+/// PNGs worked and anything else failed with a misleading
+/// "failed to fill whole buffer" error.
 pub fn png_to_rgba<R: Read + BufRead + Seek>(reader: R) -> Result<(Vec<u8>, u32, u32)> {
-    let decoder = png::Decoder::new(reader);
+    let mut decoder = png::Decoder::new(reader);
+    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
     let mut png_reader = decoder.read_info()?;
     let buffer_size = png_reader
         .output_buffer_size()
@@ -60,7 +67,26 @@ pub fn png_to_rgba<R: Read + BufRead + Seek>(reader: R) -> Result<(Vec<u8>, u32,
     let mut buf = vec![0; buffer_size];
     // png is supposed to contain a single frame.
     let info = png_reader.next_frame(&mut buf)?;
-    Ok((buf, info.width, info.height))
+    let data = &buf[..info.buffer_size()];
+    let rgba = match info.color_type {
+        png::ColorType::Rgba => data.to_vec(),
+        png::ColorType::Rgb => data
+            .chunks_exact(3)
+            .flat_map(|p| [p[0], p[1], p[2], 0xFF])
+            .collect(),
+        png::ColorType::Grayscale => data.iter().flat_map(|&g| [g, g, g, 0xFF]).collect(),
+        png::ColorType::GrayscaleAlpha => data
+            .chunks_exact(2)
+            .flat_map(|p| [p[0], p[0], p[0], p[1]])
+            .collect(),
+        png::ColorType::Indexed => {
+            return Err(IOError::new(
+                ErrorKind::InvalidData,
+                "indexed png could not be expanded",
+            ));
+        }
+    };
+    Ok((rgba, info.width, info.height))
 }
 
 /// Clears the alpha channel (set to 0xFF).
@@ -220,4 +246,31 @@ fn test_u32_endianness_conversion_preserves_rgba_channels() {
     let rgba_le = u32be_to_u32le(&rgba_be[..], 1).unwrap();
     let roundtrip = u32be_to_u32le(&rgba_le[..], 1).unwrap();
     assert_eq!(rgba_be.to_vec(), roundtrip);
+}
+
+#[test]
+fn test_rgbale_device_to_rgba_roundtrip() {
+    // two pixels, in the "pivot" RGBA big endian format
+    let rgba = [0x11_u8, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88];
+    let mode = ColorMode::Rgba(Endian::Little);
+    let device = mode.rgba_to_device(&rgba, 2, 1).unwrap();
+    // used to fail with "failed to fill whole buffer"
+    let back = mode.device_to_rgba(&device, 2, 1).unwrap();
+    assert_eq!(rgba.to_vec(), back);
+}
+
+#[test]
+fn test_png_rgb_without_alpha_is_expanded() {
+    // 1x2 RGB png (no alpha channel) -> opaque RGBA
+    let mut png_bytes = Vec::new();
+    {
+        let mut enc = png::Encoder::new(&mut png_bytes, 1, 2);
+        enc.set_color(png::ColorType::Rgb);
+        enc.set_depth(png::BitDepth::Eight);
+        let mut w = enc.write_header().unwrap();
+        w.write_image_data(&[1, 2, 3, 4, 5, 6]).unwrap();
+    }
+    let (rgba, w, h) = png_to_rgba(Cursor::new(png_bytes)).unwrap();
+    assert_eq!((w, h), (1, 2));
+    assert_eq!(rgba, vec![1, 2, 3, 0xFF, 4, 5, 6, 0xFF]);
 }

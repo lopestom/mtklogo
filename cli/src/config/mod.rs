@@ -126,6 +126,39 @@ impl Config {
     }
 
     pub fn load() -> Result<Config> {
-        Config::config_path().and_then(|(path, file)| Self::wrap_read(path.as_path(), file))
+        Self::load_with_path().map(|(config, _)| config)
+    }
+
+    /// Loads the configuration and also tells which file was actually used.
+    ///
+    /// `$HOME/.config/mtklogo.yaml` silently wins over the file shipped next
+    /// to the executable, which is a classic trap: you edit the local yaml and
+    /// nothing changes. Callers can show the path (and the shadowed files).
+    pub fn load_with_path() -> Result<(Config, PathBuf)> {
+        let (path, file) = Config::config_path()?;
+        let config = Self::wrap_read(path.as_path(), file)?;
+        Ok((config, path))
+    }
+
+    /// Other candidate configuration files that exist but are NOT used.
+    pub fn shadowed_by(used: &Path) -> Vec<PathBuf> {
+        let mut candidates: Vec<PathBuf> = Vec::new();
+        if let Some(mut home) = env::home_dir() {
+            home.push(".config");
+            home.push(Self::RELATIVE_CONFIG);
+            candidates.push(home);
+        }
+        candidates.push(PathBuf::from(Self::GLOBAL_CONFIG));
+        if let Ok(exe) = env::current_exe()
+            && let Some(parent) = exe.parent()
+        {
+            candidates.push(parent.join(Self::RELATIVE_CONFIG));
+        }
+        let used = std::fs::canonicalize(used).unwrap_or_else(|_| used.to_path_buf());
+        candidates
+            .into_iter()
+            .filter(|c| c.is_file())
+            .filter(|c| std::fs::canonicalize(c).map(|c| c != used).unwrap_or(true))
+            .collect()
     }
 }

@@ -28,7 +28,7 @@
       packages = forAllSystems ({ pkgs, rustPlatform, ... }: {
         default = rustPlatform.buildRustPackage {
           pname = "mtklogo";
-          version = "1.0.1";
+          version = "1.1.0";
           src = ./.;
           cargoLock = {
             lockFile = ./Cargo.lock;
@@ -41,7 +41,7 @@
 
           meta = with pkgs.lib; {
             description = "A Rust library and CLI for parsing MTK logo images";
-            homepage = "https://github.com/cyberknight777/mtklogo";
+            homepage = "https://github.com/lopestom/mtklogo";
             license = licenses.asl20;
           };
         };

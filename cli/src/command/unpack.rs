@@ -1,11 +1,38 @@
 use super::super::config::{Config, Format};
+use super::split::image_dir_name;
 use super::{cmd, data1, data2, data3, emphasize1, emphasize2, err, warn};
 use crate::Profile;
 use mtklogo::utils::{image::ImageIO, z_lib};
-use mtklogo::{ColorMode, ContentType, FileInfo, LogoImage};
+use mtklogo::{ColorMode, ContentType, FileInfo, ImageInfo, LogoImage, logo_images};
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Error as IOError, ErrorKind, Result, Write};
+use std::io::{BufWriter, Cursor, Error as IOError, ErrorKind, Result, Write};
 use std::path::{Path, PathBuf};
+
+/// Which image of a (possibly multi-image) container `unpack` reads.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ImageSel {
+    /// Historical behaviour: the first image; anything after it stays opaque.
+    First,
+    /// Every logo image, one sub-folder each (a single image is extracted flat).
+    All,
+    /// 1-based position: `1` is `logo1`, `2` is `logo2`...
+    Number(usize),
+    /// Header label, e.g. `logo2`.
+    Name(String),
+}
+
+impl ImageSel {
+    pub fn parse(arg: &str) -> ImageSel {
+        let a = arg.trim();
+        if a.eq_ignore_ascii_case("all") {
+            ImageSel::All
+        } else if let Ok(n) = a.parse::<usize>() {
+            ImageSel::Number(n)
+        } else {
+            ImageSel::Name(a.to_string())
+        }
+    }
+}
 
 /// All relevant inputs required by the `unpack` subcommand.
 pub struct UnpackRequest {
@@ -16,6 +43,7 @@ pub struct UnpackRequest {
     pub flip: bool,
     pub zip: bool,
     pub check: bool,
+    pub image: ImageSel,
     pub path: PathBuf,
     pub output: PathBuf,
 }
@@ -29,6 +57,7 @@ pub fn run_unpack(req: UnpackRequest) -> Result<()> {
         flip,
         zip,
         check,
+        image,
         path,
         output,
     } = req;
@@ -73,37 +102,75 @@ pub fn run_unpack(req: UnpackRequest) -> Result<()> {
         emphasize1(output.display())
     );
 
-    // Opens the file
-    let f = File::open(path)?;
+    // Reads the whole file: images of a container are located by walking its headers.
+    let data = std::fs::read(&path)?;
 
     let format_provider = |sz: u32| profile.guess_format(sz, flip);
-
-    // Reads through it.
-    let mut reader = BufReader::new(f);
-    // reads whole image in memory.
-    let image = LogoImage::read(&mut reader)?;
-    println!("logo image has {} slots", data1(image.blobs.len()));
-    // let format_provider = &conf::guess_format;
     let mut had_error = false;
-    for (id, blob) in image.blobs.iter().enumerate() {
-        let should_process = match slots {
-            None => true,
-            Some(ref s) => s.contains(&id),
-        };
-        if !should_process {
-            continue;
-        }
-        if check {
-            if check_logo(id, blob, zip, mtk_color_model, &output, format_provider).is_err() {
-                had_error = true;
+
+    if image == ImageSel::First {
+        // Historical behaviour, untouched: the first image, the rest stays opaque `cert`.
+        let img = LogoImage::read(&mut Cursor::new(&data))?;
+        println!("logo image has {} slots", data1(img.blobs.len()));
+        warn_hidden_images(&data);
+        had_error |= unpack_image(
+            &img,
+            &slots,
+            check,
+            zip,
+            mtk_color_model,
+            &output,
+            format_provider,
+        )?;
+    } else {
+        let infos = logo_images(&data)?;
+        let picked: Vec<usize> = match &image {
+            ImageSel::All => (0..infos.len()).collect(),
+            ImageSel::Number(0) => {
+                return Err(IOError::new(
+                    ErrorKind::InvalidInput,
+                    "images are numbered from 1 (1 = logo1, 2 = logo2...)",
+                ));
             }
-        } else {
-            extract_logo(id, blob, zip, mtk_color_model, &output, format_provider)?;
+            ImageSel::Number(n) if *n <= infos.len() => vec![*n - 1],
+            ImageSel::Name(name) => {
+                match infos.iter().position(|i| i.name.eq_ignore_ascii_case(name)) {
+                    Some(i) => vec![i],
+                    None => return Err(no_such_image(&image, &infos)),
+                }
+            }
+            _ => return Err(no_such_image(&image, &infos)),
+        };
+        let multi_dirs = image == ImageSel::All && infos.len() > 1;
+        for i in picked {
+            let info = &infos[i];
+            let img = LogoImage::read(&mut Cursor::new(&data[info.range.clone()]))?;
+            let dir = if multi_dirs {
+                let d = output.join(image_dir_name(i, &infos));
+                std::fs::create_dir_all(&d)?;
+                d
+            } else {
+                output.clone()
+            };
+            println!(
+                "image {}/{} ({}) -> {}",
+                data1(i + 1),
+                infos.len(),
+                data2(&info.name),
+                emphasize1(dir.display())
+            );
+            println!("logo image has {} slots", data1(img.blobs.len()));
+            had_error |= unpack_image(
+                &img,
+                &slots,
+                check,
+                zip,
+                mtk_color_model,
+                &dir,
+                format_provider,
+            )?;
         }
     }
-    // Persist the header and cert so repack can rebuild and re-append them.
-    use super::meta;
-    let _ = meta::write(&output, &image);
     if had_error {
         return Err(IOError::new(
             ErrorKind::InvalidData,
@@ -111,6 +178,76 @@ pub fn run_unpack(req: UnpackRequest) -> Result<()> {
         ));
     }
     Ok(())
+}
+
+/// Extracts (or checks) the slots of one image and writes its `.mtklogo-meta`.
+fn unpack_image<F>(
+    image: &LogoImage,
+    slots: &Option<Vec<usize>>,
+    check: bool,
+    zip: bool,
+    color_mode: &ColorMode,
+    output: &Path,
+    format_provider: F,
+) -> Result<bool>
+where
+    F: Fn(u32) -> Result<Format> + Copy,
+{
+    let mut had_error = false;
+    for (id, blob) in image.blobs.iter().enumerate() {
+        let should_process = match slots {
+            None => true,
+            Some(s) => s.contains(&id),
+        };
+        if !should_process {
+            continue;
+        }
+        if check {
+            if check_logo(id, blob, zip, color_mode, output, format_provider).is_err() {
+                had_error = true;
+            }
+        } else {
+            extract_logo(id, blob, zip, color_mode, output, format_provider)?;
+        }
+    }
+    // Persist the header and cert so repack can rebuild and re-append them.
+    use super::meta;
+    let _ = meta::write(output, image);
+    Ok(had_error)
+}
+
+/// Tells the user when `LogoImage::read` left logo images unread.
+fn warn_hidden_images(data: &[u8]) {
+    if let Ok(infos) = logo_images(data)
+        && infos.len() > 1
+    {
+        let names: Vec<&str> = infos.iter().skip(1).map(|i| i.name.as_str()).collect();
+        println!(
+            "{}: this file holds {} logo images; only the first was read ({} left as opaque data). \
+Use --image all, --image <n> or the split command to reach them.",
+            warn("warning"),
+            infos.len(),
+            names.join(", ")
+        );
+    }
+}
+
+fn no_such_image(sel: &ImageSel, infos: &[ImageInfo]) -> IOError {
+    let names: Vec<&str> = infos.iter().map(|i| i.name.as_str()).collect();
+    IOError::new(
+        ErrorKind::InvalidInput,
+        format!(
+            "no such image '{}': the file holds {} logo image(s): {}",
+            match sel {
+                ImageSel::Number(n) => n.to_string(),
+                ImageSel::Name(n) => n.clone(),
+                ImageSel::All => "all".to_string(),
+                ImageSel::First => "1".to_string(),
+            },
+            infos.len(),
+            names.join(", ")
+        ),
+    )
 }
 
 fn extract_logo<F>(

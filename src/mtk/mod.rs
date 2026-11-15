@@ -1,6 +1,8 @@
+mod container;
 mod header;
 mod logo;
 
+pub use self::container::{ImageInfo, join_parts, logo_images};
 pub use self::header::{MtkHeader, MtkType};
 pub use self::logo::{LogoImage, LogoTable};
 

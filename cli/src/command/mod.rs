@@ -1,7 +1,8 @@
 pub use self::explore::run_explore;
 pub use self::guess::run_guess;
 pub use self::repack::run_repack;
-pub use self::unpack::{UnpackRequest, run_unpack};
+pub use self::split::{run_join, run_split};
+pub use self::unpack::{ImageSel, UnpackRequest, run_unpack};
 use colored::{ColoredString, Colorize};
 use std::fmt::Display;
 
@@ -9,6 +10,7 @@ mod explore;
 mod guess;
 mod meta;
 mod repack;
+mod split;
 mod unpack;
 
 /// formats a command.

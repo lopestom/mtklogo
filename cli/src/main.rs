@@ -83,8 +83,41 @@ fn build_cli() -> Command {
                 .short('n')
                 .long("no-out")
                 .conflicts_with("output"))
+            .arg(Arg::new("image")
+                .help("Logo image of a multi-image container: 1 (logo1), 2 (logo2)..., a label such as logo2, or `all` (one sub-folder per image). Default: the first image only")
+                .value_name("image")
+                .num_args(1)
+                .long("image"))
             .arg(&path_arg)
             .arg(&slots_arg)
+        )
+
+        .subcommand(Command::new("split")
+            .about("Splits a multi-image container (logo1, logo2...) into one file per image")
+            .arg(Arg::new("output")
+                .help("Sets output directory")
+                .value_name("output")
+                .num_args(1)
+                .short('o')
+                .long("output")
+                .value_parser(clap::builder::ValueParser::new(is_existing_directory)))
+            .arg(&path_arg)
+        )
+
+        .subcommand(Command::new("join")
+            .about("Joins image files (from `split` or `repack`) into one container, each aligned")
+            .arg(Arg::new("output")
+                .value_name("output")
+                .help("Path to output `logo.bin`")
+                .required(true)
+                .num_args(1)
+                .short('o')
+                .long("output"))
+            .arg(Arg::new("files")
+                .help("Image files, in container order")
+                .value_name("files")
+                .num_args(1..)
+                .required(true))
         )
 
         .subcommand(Command::new("explore")
@@ -139,6 +172,29 @@ Note: the program may be very slow if your input size is a large prime number!")
                 .action(ArgAction::SetTrue)
                 .short('a')
                 .long("alpha"))
+            .arg(Arg::new("reference")
+                .help("Original `logo.bin`: checks slot count and every slot's decompressed size against it (wrong image dimensions usually brick the boot logo) and warns if the result is bigger")
+                .value_name("original")
+                .num_args(1)
+                .short('r')
+                .long("reference")
+                .value_parser(clap::builder::ValueParser::new(is_existing_file)))
+            .arg(Arg::new("force")
+                .help("With --reference: only warn about mismatches instead of failing")
+                .action(ArgAction::SetTrue)
+                .long("force")
+                .requires("reference"))
+        )
+
+        .subcommand(Command::new("profiles")
+            .about("Lists the profiles of the configuration file (machine friendly: name, color model, number of formats, aliases; tab separated)")
+            .arg(Arg::new("config")
+                .help("Uses an alternative configuration file")
+                .value_name("configfile")
+                .num_args(1)
+                .short('c')
+                .long("config")
+                .value_parser(clap::builder::ValueParser::new(is_existing_file)))
         )
 }
 
@@ -146,10 +202,36 @@ fn wrapped_main() -> IOResult<()> {
     let mut prg = build_cli();
     let matches = prg.clone().get_matches();
 
+    // `profiles` output is meant to be parsed by scripts: no banner.
+    if let Some(matches) = matches.subcommand_matches("profiles") {
+        let config = solve_config(matches)?.0;
+        for p in config.profiles.iter() {
+            println!(
+                "{}\t{}\t{}\t{}",
+                p.name,
+                p.color_model,
+                p.formats.len(),
+                p.alias.as_ref().map(|a| a.join(",")).unwrap_or_default()
+            );
+        }
+        return Ok(());
+    }
+
     println!("{}", emphasize1(String::from_utf8_lossy(LOGO)));
 
     if let Some(matches) = matches.subcommand_matches("unpack") {
-        let config = solve_config(matches)?;
+        let (config, config_path) = solve_config(matches)?;
+        if let Some(path) = config_path {
+            println!("configuration: {}", emphasize1(path.display()));
+            for other in Config::shadowed_by(&path) {
+                println!(
+                    "{}: {} exists but is ignored ({} has priority)",
+                    warn("warning"),
+                    other.display(),
+                    path.display()
+                );
+            }
+        }
         let profile = matches
             .get_one::<String>("profile")
             .map(|s| s.as_str())
@@ -159,6 +241,10 @@ fn wrapped_main() -> IOResult<()> {
         let flip = matches.get_flag("flip");
         let zip = matches.get_flag("zip");
         let check = matches.get_flag("no-out");
+        let image = matches
+            .get_one::<String>("image")
+            .map(|s| command::ImageSel::parse(s))
+            .unwrap_or(command::ImageSel::First);
         let path = solve_path(matches)?;
         let output = solve_output(matches)?;
         let slots = solve_slots(matches)?;
@@ -171,9 +257,24 @@ fn wrapped_main() -> IOResult<()> {
             flip,
             zip,
             check,
+            image,
             path,
             output,
         })
+    } else if let Some(matches) = matches.subcommand_matches("split") {
+        let path = solve_path(matches)?;
+        let output = solve_output(matches)?;
+        command::run_split(path, output)
+    } else if let Some(matches) = matches.subcommand_matches("join") {
+        let files = matches
+            .get_many::<String>("files")
+            .map(|vals| vals.map(PathBuf::from).collect::<Vec<_>>())
+            .ok_or_else(|| IOError::other("no files to join"))?;
+        let output = matches
+            .get_one::<String>("output")
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        command::run_join(output, files)
     } else if let Some(matches) = matches.subcommand_matches("explore") {
         let path = solve_path(matches)?;
         let output = solve_output(matches)?;
@@ -191,7 +292,9 @@ fn wrapped_main() -> IOResult<()> {
             .map(PathBuf::from)
             .unwrap_or_default();
         let strip_alpha = matches.get_flag("alpha");
-        command::run_repack(output, paths, strip_alpha)
+        let reference = matches.get_one::<String>("reference").map(PathBuf::from);
+        let force = matches.get_flag("force");
+        command::run_repack(output, paths, strip_alpha, reference, force)
     } else if let Some(matches) = matches.subcommand_matches("guess") {
         let size = parse_or_error::<usize>(matches, "size")?;
         command::run_guess(size)
@@ -232,10 +335,13 @@ fn solve_output(matches: &ArgMatches) -> IOResult<PathBuf> {
         .or_else(|_| env::current_dir())
 }
 
-fn solve_config(matches: &ArgMatches) -> IOResult<Config> {
+fn solve_config(matches: &ArgMatches) -> IOResult<(Config, Option<PathBuf>)> {
     match matches.get_one::<String>("config") {
-        Some(c) => Config::from_file(PathBuf::from(c).as_path()),
-        None => Config::load(),
+        Some(c) => {
+            let path = PathBuf::from(c);
+            Config::from_file(path.as_path()).map(|cfg| (cfg, Some(path)))
+        }
+        None => Config::load_with_path().map(|(cfg, path)| (cfg, Some(path))),
     }
 }
 

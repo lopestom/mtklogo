@@ -1,4 +1,4 @@
-pub use mtk::{LogoImage, LogoTable, MtkHeader, MtkType};
+pub use mtk::{ImageInfo, LogoImage, LogoTable, MtkHeader, MtkType, join_parts, logo_images};
 use std::fmt;
 use std::fmt::Display;
 use std::io::{Error as IOError, ErrorKind, Result};
