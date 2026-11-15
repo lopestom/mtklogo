@@ -206,7 +206,7 @@ jobs:
           config: cliff.toml
           args: --unreleased --strip header
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MTKLOGO }}
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
