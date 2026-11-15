@@ -206,12 +206,12 @@ jobs:
           config: cliff.toml
           args: --unreleased --strip header
         env:
-          GITHUB_TOKEN: ${{ secrets.MTKLOGO }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          token: ${{ secrets.MTKLOGO }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: v${{ needs.version_change.outputs.version }}
           target_commitish: ${{ github.sha }}
           body: |
@@ -220,10 +220,10 @@ jobs:
             ## mtklogo for Linux — Windows 10/11 — Android
             Compare the result with the attached `.sha256` file.
           files: |
-            dist/mtklogo-linux-x86_64/mtklogo
-            dist/mtklogo-windows-x86_64/mtklogo.exe
-            dist/mtklogo-android-arm64-v8a/mtklogo
-            dist/mtklogo-linux-x86_64/mtklogo.yaml
+            release/mtklogo-linux-x86_64
+            release/mtklogo-windows-x86_64.exe
+            release/mtklogo-android-arm64-v8a
+            release/mtklogo.yaml
           fail_on_unmatched_files: true
           draft: false
           prerelease: true
