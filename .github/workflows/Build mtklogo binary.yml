@@ -217,13 +217,13 @@ jobs:
           body: |
             ${{ steps.changelog.outputs.content }}
 
-            ## mtklogo for Linux — Windows 10/11 - Android
+            ## mtklogo for Linux — Windows 10/11 — Android
             Compare the result with the attached `.sha256` file.
           files: |
-            release/mtklogo-linux-x86_64
-            release/mtklogo-windows-x86_64.exe
-            release/mtklogo-android-arm64-v8a
-            release/mtklogo.yaml
+            dist/mtklogo-linux-x86_64/mtklogo
+            dist/mtklogo-windows-x86_64/mtklogo.exe
+            dist/mtklogo-android-arm64-v8a/mtklogo
+            dist/mtklogo-linux-x86_64/mtklogo.yaml
           fail_on_unmatched_files: true
           draft: false
           prerelease: true
