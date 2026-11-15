@@ -71,12 +71,16 @@ pub fn png_to_rgba<R: Read + BufRead + Seek>(reader: R) -> Result<(Vec<u8>, u32,
     let rgba = match info.color_type {
         png::ColorType::Rgba => data.to_vec(),
         png::ColorType::Rgb => data
-            .chunks_exact(3)
+            .as_chunks::<3>()
+            .0
+            .iter()
             .flat_map(|p| [p[0], p[1], p[2], 0xFF])
             .collect(),
         png::ColorType::Grayscale => data.iter().flat_map(|&g| [g, g, g, 0xFF]).collect(),
         png::ColorType::GrayscaleAlpha => data
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .flat_map(|p| [p[0], p[0], p[0], p[1]])
             .collect(),
         png::ColorType::Indexed => {
