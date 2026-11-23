@@ -4,7 +4,7 @@ Review and analyze the updated documentation for this branch v1.1.0 at [[https:/
 
 [[https://img.shields.io/badge/license-MIT-blue.svg]]
 [[https://img.shields.io/badge/license-APACHE-blue.svg]]
-[[https://github.com/lopestom/mtklogo/actions/workflows/ci.yml/badge.svg]]
+[[https://github.com/lopestom/mtklogo/actions/workflows/Build mtklogo binary.yml/badge.svg]]
 
 * Table of contents
 :PROPERTIES:
